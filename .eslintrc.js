@@ -3,9 +3,10 @@ module.exports = {
       node: true,
       browser: false
     },
-    parser: "babel-eslint",
+    // parser: "babel-eslint",
     extends: [
-      'ash-nazg/sauron-node'
+      'ash-nazg/sauron-node',
+      'plugin:node/recommended-script'
     ],
     settings: {
       polyfills: [

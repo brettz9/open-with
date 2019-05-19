@@ -4,7 +4,7 @@
   "description": "Obtain (and open) desktop applications that can open a given file",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node index.js"
   },
   "repository": {
     "type": "git",
@@ -25,7 +25,7 @@
     "node": ">= 8.0.0"
   },
   "dependencies": {
-    "macos-defaults": "https://github.com/tarranjones/macOS-defaults",
+    "macos-defaults": "https://github.com/brettz9/macOS-defaults#openwith",
     "mdls": "https://github.com/brettz9/node-mdls#promises"
   },
   "devDependencies": {
