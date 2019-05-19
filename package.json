@@ -25,6 +25,7 @@
     "node": ">= 8.0.0"
   },
   "dependencies": {
+    "lsregister": "0.0.1",
     "macos-defaults": "https://github.com/brettz9/macOS-defaults#openwith",
     "mdls": "git+https://github.com/brettz9/node-mdls.git#promises"
   },
