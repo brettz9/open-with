@@ -36,21 +36,25 @@ try {
   const result = await lsregister.dump();
   console.log('result', result.length);
   console.log('r', result.filter(({
-    bindings, contentType, extension, uti, serviceId,
-    bundleClass, containerMountState, extPointID, uRLScheme,
-    claimId, volumeId, ...others
+    contentType, extension,
+    uti, bindings, serviceId, uRLScheme,
+    bundleClass, containerMountState, extPointID,
+    claimId, volumeId // , ...others
   }) => {
+    return contentType;
+    /*
     return !bindings && !contentType && !extension &&
       !uti && !serviceId && !bundleClass && !containerMountState &&
       !extPointID && !uRLScheme && !claimId && !volumeId &&
       !Object.keys(others).some((item) => item.startsWith('pluginIdentif'));
+    */
     // return bindings && (bindings.includes('.js') ||
     //    bindings.includes('javascript'));
   }));
 } catch (err) {
   console.log('Error', err);
 }
-return;
+// return;
 
 try {
   const macOSDefaults = new MacOSDefaults();
