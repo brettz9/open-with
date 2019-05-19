@@ -3,10 +3,12 @@
 const {join, extname} = require('path');
 const mdls = require('mdls');
 const lsregister = require('lsregister');
-const OpenWith = require('macos-defaults/OpenWith');
 const {MacOSDefaults} = require('macos-defaults');
+const OpenWith = require('macos-defaults/OpenWith');
+const PlistParser = require('macos-defaults/PlistParser');
 
-const filePath = join(__dirname, 'index.js');
+// const filePath = join(__dirname, 'index.js');
+const filePath = join(__dirname, 'README.md');
 
 (async () => {
 try {
@@ -24,7 +26,7 @@ try {
   const {
     ItemContentTypeTree
   } = await mdls(filePath, '-name kMDItemContentTypeTree');
-  console.log('Data', ItemContentTypeTree);
+  console.log('kMDItemContentTypeTree', ItemContentTypeTree);
 } catch (err) {
   console.log('Error', err);
 }
@@ -35,13 +37,16 @@ try {
 try {
   const result = await lsregister.dump();
   console.log('result', result.length);
-  console.log('r', result.filter(({
-    contentType, extension,
-    uti, bindings, serviceId, uRLScheme,
-    bundleClass, containerMountState, extPointID,
-    claimId, volumeId // , ...others
-  }) => {
-    return contentType;
+  console.log('r', result.filter((item) => {
+    const {
+      plistCommon,
+      contentType, extension,
+      uti, bindings, serviceId, uRLScheme,
+      bundleClass, containerMountState, extPointID,
+      claimId, volumeId // , ...others
+    } = item;
+    return plistCommon && new PlistParser({plist: plistCommon}).start().CFBundleDocumentTypes;
+    // return contentType;
     /*
     return !bindings && !contentType && !extension &&
       !uti && !serviceId && !bundleClass && !containerMountState &&
@@ -50,11 +55,20 @@ try {
     */
     // return bindings && (bindings.includes('.js') ||
     //    bindings.includes('javascript'));
+    // This is messed up, but onto the right track now
+  }).map((i) => {
+    return new PlistParser({plist: i.plistCommon}).start().CFBundleDocumentTypes.filter((dts) => {
+      return dts.CFBundleTypeName &&
+        (dts.LSItemContentTypes); // || dts.CFBundleTypeExtensions || dts.CFBundleTypeMIMETypes);
+    }).map((dts) => {
+      // return dts.CFBundleTypeName;
+      return [dts.CFBundleTypeName, dts.LSItemContentTypes]; // || dts.CFBundleTypeExtensions;
+    });
   }));
 } catch (err) {
   console.log('Error', err);
 }
-// return;
+return;
 
 try {
   const macOSDefaults = new MacOSDefaults();
