@@ -4,12 +4,14 @@ const {join} = require('path');
 const mdls = require('mdls');
 const OpenWith = require('macos-defaults/OpenWith');
 
+const filePath = join(__dirname, 'index.js');
+
 (async () => {
 try {
   const openWith = new OpenWith();
   const {
     bundleidentifier, path
-  } = await openWith.getAsync(join(__dirname, 'index.js'));
+  } = await openWith.getAsync(filePath);
   console.log('bundleidentifier', bundleidentifier);
   console.log('path', path);
 } catch (err) {
@@ -17,7 +19,7 @@ try {
 }
 
 try {
-  const data = await mdls('./index.js', '-name kMDItemContentTypeTree');
+  const data = await mdls(filePath, '-name kMDItemContentTypeTree');
   console.log('Data', data);
 } catch (err) {
   console.log('Error', err);
