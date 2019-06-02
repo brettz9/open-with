@@ -36,7 +36,7 @@ try {
 try {
   const result = await lsregister.dump();
   console.log('result', result.length);
-  console.log('r', result.filter((item) => {
+  console.log('r', JSON.stringify(result.filter((item) => {
     const {
       plistCommon
       // contentType, extension,
@@ -44,7 +44,12 @@ try {
       // bundleClass, containerMountState, extPointID,
       // claimId, volumeId // , ...others
     } = item;
-    return plistCommon && plistCommon.CFBundleDocumentTypes;
+    return plistCommon && plistCommon.CFBundleDocumentTypes &&
+      plistCommon.CFBundleDocumentTypes.some((dts) => {
+        return dts.CFBundleTypeName &&
+          (dts.LSItemContentTypes);
+        // || dts.CFBundleTypeExtensions || dts.CFBundleTypeMIMETypes);
+      });
     // return contentType;
     /*
     return !bindings && !contentType && !extension &&
@@ -65,7 +70,7 @@ try {
       return [dts.CFBundleTypeName, dts.LSItemContentTypes];
       // || dts.CFBundleTypeExtensions;
     });
-  }).filter((i) => i.length));
+  }), null, 2));
 } catch (err) {
   console.log('Error', err);
 }
