@@ -21,10 +21,11 @@ try {
   console.log('er', err);
 }
 
+let ItemContentTypeTree;
 try {
-  const {
+  ({
     ItemContentTypeTree
-  } = await mdls(filePath, '-name kMDItemContentTypeTree');
+  } = await mdls(filePath, '-name kMDItemContentTypeTree'));
   console.log('kMDItemContentTypeTree', ItemContentTypeTree);
 } catch (err) {
   console.log('Error', err);
@@ -33,10 +34,11 @@ try {
 // Todo: Use mdls data above with this lsregister below:
 // eslint-disable-next-line max-len
 // /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -dump | grep -n7 'public'
+let contentTypeObj;
 try {
   const result = await lsregister.dump();
   console.log('result', result.length);
-  console.log('r', JSON.stringify(result.filter((item) => {
+  contentTypeObj = result.reduce((obj, item) => {
     const {
       plistCommon
       // contentType, extension,
@@ -44,13 +46,29 @@ try {
       // bundleClass, containerMountState, extPointID,
       // claimId, volumeId // , ...others
     } = item;
-    return plistCommon && plistCommon.CFBundleDocumentTypes &&
-      plistCommon.CFBundleDocumentTypes.some((dts) => {
-        return dts.CFBundleTypeName &&
-          (dts.LSItemContentTypes);
-        // || dts.CFBundleTypeExtensions || dts.CFBundleTypeMIMETypes);
-      });
+    if (!plistCommon || !plistCommon.CFBundleDocumentTypes) {
+      return obj;
+    }
+    // CFBundleExecutable or CFBundleName seem similar? (use with `open -a`)
+    // CFBundleIdentifier with `open -b`
     // return contentType;
+    plistCommon.CFBundleDocumentTypes.forEach((dts) => {
+      if (!dts.CFBundleTypeName || !dts.LSItemContentTypes) {
+        return;
+      }
+      // If only has `CFBundleTypeName` is just a file type
+      if (plistCommon.CFBundleDisplayName || plistCommon.CFBundleName) {
+        console.log('item', plistCommon.CFBundleIdentifier, plistCommon.CFBundleDisplayName || plistCommon.CFBundleName);
+      }
+      dts.LSItemContentTypes.forEach((LSItemContentType) => {
+        if (!obj[LSItemContentType]) {
+          obj[LSItemContentType] = [];
+        }
+        obj[LSItemContentType].push(dts.CFBundleTypeName);
+      });
+      // || dts.CFBundleTypeExtensions || dts.CFBundleTypeMIMETypes);
+    });
+    return obj;
     /*
     return !bindings && !contentType && !extension &&
       !uti && !serviceId && !bundleClass && !containerMountState &&
@@ -60,20 +78,16 @@ try {
     // return bindings && (bindings.includes('.js') ||
     //    bindings.includes('javascript'));
     // This is messed up, but onto the right track now
-  }).map((i) => {
-    return i.plistCommon.CFBundleDocumentTypes.filter((dts) => {
-      return dts.CFBundleTypeName &&
-        (dts.LSItemContentTypes);
-      // || dts.CFBundleTypeExtensions || dts.CFBundleTypeMIMETypes);
-    }).map((dts) => {
-      // return dts.CFBundleTypeName;
-      return [dts.CFBundleTypeName, dts.LSItemContentTypes];
-      // || dts.CFBundleTypeExtensions;
-    });
-  }), null, 2));
+  }, {});
+  // console.log(JSON.stringify(contentTypeObj, null, 2));
 } catch (err) {
   console.log('Error', err);
 }
+/*
+console.log('ItemContentTypeTree', ItemContentTypeTree.map((item) => {
+  return contentTypeObj[item];
+}));
+*/
 return;
 
 try {
