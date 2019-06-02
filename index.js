@@ -5,7 +5,6 @@ const mdls = require('mdls');
 const lsregister = require('lsregister');
 const {MacOSDefaults} = require('macos-defaults');
 const OpenWith = require('macos-defaults/OpenWith');
-const PlistParser = require('macos-defaults/PlistParser');
 
 // const filePath = join(__dirname, 'index.js');
 const filePath = join(__dirname, 'README.md');
@@ -39,13 +38,13 @@ try {
   console.log('result', result.length);
   console.log('r', result.filter((item) => {
     const {
-      plistCommon,
-      contentType, extension,
-      uti, bindings, serviceId, uRLScheme,
-      bundleClass, containerMountState, extPointID,
-      claimId, volumeId // , ...others
+      plistCommon
+      // contentType, extension,
+      // uti, bindings, serviceId, uRLScheme,
+      // bundleClass, containerMountState, extPointID,
+      // claimId, volumeId // , ...others
     } = item;
-    return plistCommon && new PlistParser({plist: plistCommon}).start().CFBundleDocumentTypes;
+    return plistCommon && plistCommon.CFBundleDocumentTypes;
     // return contentType;
     /*
     return !bindings && !contentType && !extension &&
@@ -57,12 +56,14 @@ try {
     //    bindings.includes('javascript'));
     // This is messed up, but onto the right track now
   }).map((i) => {
-    return new PlistParser({plist: i.plistCommon}).start().CFBundleDocumentTypes.filter((dts) => {
+    return i.plistCommon.CFBundleDocumentTypes.filter((dts) => {
       return dts.CFBundleTypeName &&
-        (dts.LSItemContentTypes); // || dts.CFBundleTypeExtensions || dts.CFBundleTypeMIMETypes);
+        (dts.LSItemContentTypes);
+      // || dts.CFBundleTypeExtensions || dts.CFBundleTypeMIMETypes);
     }).map((dts) => {
       // return dts.CFBundleTypeName;
-      return [dts.CFBundleTypeName, dts.LSItemContentTypes]; // || dts.CFBundleTypeExtensions;
+      return [dts.CFBundleTypeName, dts.LSItemContentTypes];
+      // || dts.CFBundleTypeExtensions;
     });
   }));
 } catch (err) {
