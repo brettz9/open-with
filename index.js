@@ -4,7 +4,7 @@ const {join, extname} = require('path');
 const mdls = require('mdls');
 const lsregister = require('lsregister');
 const {MacOSDefaults} = require('macos-defaults');
-const OpenWith = require('macos-defaults/OpenWith');
+const OpenWith = require('../macOS-defaults/OpenWith');
 const PlistParser = require('macos-defaults/PlistParser');
 
 // const filePath = join(__dirname, 'index.js');
@@ -21,6 +21,7 @@ try {
 } catch (err) {
   console.log('er', err);
 }
+return;
 
 try {
   const {
