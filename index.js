@@ -8,6 +8,7 @@ const OpenWith = require('macos-defaults/OpenWith');
 
 // const filePath = join(__dirname, 'index.js');
 const filePath = join(__dirname, 'README.md');
+const ext = extname(filePath).slice(1);
 
 (async () => {
 try {
@@ -31,10 +32,10 @@ try {
   console.log('Error', err);
 }
 
-// Todo: Use mdls data above with this lsregister below:
 // eslint-disable-next-line max-len
 // /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -dump | grep -n7 'public'
 let contentTypeObj;
+const exts = [];
 try {
   const result = await lsregister.dump();
   console.log('result', result.length);
@@ -49,22 +50,35 @@ try {
     if (!plistCommon || !plistCommon.CFBundleDocumentTypes) {
       return obj;
     }
+    if (!plistCommon.CFBundleDisplayName && !plistCommon.CFBundleName) {
+      // Excludes `com.apple.system-library` and `com.apple.local-library`
+      return obj;
+    }
     // CFBundleExecutable or CFBundleName seem similar? (use with `open -a`)
     // CFBundleIdentifier with `open -b`
     // return contentType;
     plistCommon.CFBundleDocumentTypes.forEach((dts) => {
-      if (!dts.CFBundleTypeName || !dts.LSItemContentTypes) {
+      if (!dts.CFBundleTypeName ||
+        (!dts.LSItemContentTypes && !dts.CFBundleTypeExtensions)) {
+        return;
+      }
+      if (dts.CFBundleTypeExtensions && !dts.LSItemContentTypes) {
+        console.log('CFBundleTypeExtensions', dts);
+        if (dts.CFBundleTypeExtensions.includes(ext)) {
+          exts.push(plistCommon.CFBundleDisplayName || plistCommon.CFBundleName);
+          return;
+        }
         return;
       }
       // If only has `CFBundleTypeName` is just a file type
-      if (plistCommon.CFBundleDisplayName || plistCommon.CFBundleName) {
-        console.log('item', plistCommon.CFBundleIdentifier, plistCommon.CFBundleDisplayName || plistCommon.CFBundleName);
-      }
+      // console.log('item', plistCommon.CFBundleIdentifier, plistCommon.CFBundleDisplayName || plistCommon.CFBundleName);
       dts.LSItemContentTypes.forEach((LSItemContentType) => {
         if (!obj[LSItemContentType]) {
           obj[LSItemContentType] = [];
         }
-        obj[LSItemContentType].push(dts.CFBundleTypeName);
+        // obj[LSItemContentType].push(plistCommon.CFBundleIdentifier);
+        obj[LSItemContentType].push(plistCommon.CFBundleDisplayName || plistCommon.CFBundleName); // .push(dts.CFBundleTypeName);
+        // console.log('plistCommon', plistCommon.CFBundleIdentifier);
       });
       // || dts.CFBundleTypeExtensions || dts.CFBundleTypeMIMETypes);
     });
@@ -83,11 +97,14 @@ try {
 } catch (err) {
   console.log('Error', err);
 }
-/*
-console.log('ItemContentTypeTree', ItemContentTypeTree.map((item) => {
-  return contentTypeObj[item];
-}));
-*/
+
+console.log('ItemContentTypeTree', [...new Set(ItemContentTypeTree.reduce((arr, item) => {
+  if (!contentTypeObj[item]) {
+    return arr;
+  }
+  return arr.concat(contentTypeObj[item]);
+}, exts))].sort());
+
 return;
 
 try {
@@ -100,7 +117,6 @@ try {
 
   // Todo: Also allow a filter from launchservices per mdls content-type results
 
-  const ext = extname(filePath).slice(1);
   const matchingExtensions = lsHandlers.filter(({
     LSHandlerContentTagClass,
     LSHandlerContentTag
