@@ -65,7 +65,7 @@ try {
       return [dts.CFBundleTypeName, dts.LSItemContentTypes];
       // || dts.CFBundleTypeExtensions;
     });
-  }));
+  }).filter((i) => i.length));
 } catch (err) {
   console.log('Error', err);
 }
