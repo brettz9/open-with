@@ -1,10 +1,13 @@
 /* eslint-disable no-console */
 'use strict';
+const {readFileSync} = require('fs');
 const {join, extname} = require('path');
 const mdls = require('mdls');
 const lsregister = require('lsregister');
 const {MacOSDefaults} = require('macos-defaults');
 const OpenWith = require('macos-defaults/OpenWith');
+const Icns = require('@fiahfy/icns');
+const Datauri = require('datauri');
 
 // const filePath = join(__dirname, 'index.js');
 const filePath = join(__dirname, 'README.md');
@@ -117,10 +120,40 @@ const appNames = [...new Set(ItemContentTypeTree.reduce((arr, item) => {
 }, exts))].sort();
 console.log('appNames', appNames);
 
-// Todo: Use `@fiahfy/icns` to extract their PNG, etc. for HTML display?
-console.log('appIcons', appNames.map((appName) => {
+const appIcons = appNames.map((appName) => {
   return iconMap.get(appName);
-}));
+});
+
+// Todo: Use `@fiahfy/icns` to extract their PNG, etc. for HTML display?
+console.log('appIcons', appIcons);
+
+appIcons.forEach((appIcon) => {
+  const buf = readFileSync(appIcon);
+  const icns = new Icns(buf);
+  const imagesByIncreasingBytes = icns.images.sort((a, b) => {
+    return a.bytes < b.bytes ? -1 : a.bytes > b.bytes ? 1 : 0;
+  });
+  const imagesAsBuffers = imagesByIncreasingBytes.map((icon) => icon.image);
+  // 'icon.osType', e.g., `ic09`: https://en.wikipedia.org/wiki/Apple_Icon_Image_format#Icon_types
+  // console.log('imagesAsBuffers', imagesAsBuffers);
+  imagesAsBuffers.some((imageAsBuffer, i) => {
+    const datauri = new Datauri();
+
+    // Todo: Use this: console.log('mimetype', datauri.mimetype);
+    datauri.format('.png', imageAsBuffer);
+
+    const {osType} = imagesByIncreasingBytes[i];
+    if (
+      // Exclude ones which have errors in display
+      (!osType.startsWith('ic') && !osType.startsWith('it')) ||
+      ['ic04', 'icnV'].includes(osType)) {
+      return false;
+    }
+    console.log('osType:' + osType + ';');
+    console.log(`<img src="${datauri.content}" />`);
+    return true;
+  });
+});
 
 return;
 
