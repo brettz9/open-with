@@ -36,6 +36,7 @@ try {
 // /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -dump | grep -n7 'public'
 let contentTypeObj;
 const exts = [];
+const iconMap = new Map();
 try {
   const result = await lsregister.dump();
   console.log('result', result.length);
@@ -54,6 +55,8 @@ try {
       // Excludes `com.apple.system-library` and `com.apple.local-library`
       return obj;
     }
+    const bundleName = plistCommon.CFBundleDisplayName ||
+      plistCommon.CFBundleName;
     // CFBundleExecutable or CFBundleName seem similar? (use with `open -a`)
     // CFBundleIdentifier with `open -b`
     // return contentType;
@@ -62,22 +65,30 @@ try {
         (!dts.LSItemContentTypes && !dts.CFBundleTypeExtensions)) {
         return;
       }
+      // console.log('item', Object.keys(item).filter((i) => i.includes('ic')));
+      // console.log('item', item.iconName, item.iconFlags, item.icons);
       if (dts.CFBundleTypeExtensions && !dts.LSItemContentTypes) {
-        console.log('CFBundleTypeExtensions', dts);
+        // console.log('CFBundleTypeExtensions', dts);
         if (dts.CFBundleTypeExtensions.includes(ext)) {
-          exts.push(plistCommon.CFBundleDisplayName || plistCommon.CFBundleName);
+          exts.push(bundleName);
+          if (item.icons) {
+            iconMap.set(bundleName, join(item.path, item.icons));
+          }
           return;
         }
         return;
       }
       // If only has `CFBundleTypeName` is just a file type
-      // console.log('item', plistCommon.CFBundleIdentifier, plistCommon.CFBundleDisplayName || plistCommon.CFBundleName);
+      // console.log('item', plistCommon.CFBundleIdentifier, bundleName);
       dts.LSItemContentTypes.forEach((LSItemContentType) => {
         if (!obj[LSItemContentType]) {
           obj[LSItemContentType] = [];
         }
+        if (item.icons) {
+          iconMap.set(bundleName, join(item.path, item.icons));
+        }
         // obj[LSItemContentType].push(plistCommon.CFBundleIdentifier);
-        obj[LSItemContentType].push(plistCommon.CFBundleDisplayName || plistCommon.CFBundleName); // .push(dts.CFBundleTypeName);
+        obj[LSItemContentType].push(bundleName); // .push(dts.CFBundleTypeName);
         // console.log('plistCommon', plistCommon.CFBundleIdentifier);
       });
       // || dts.CFBundleTypeExtensions || dts.CFBundleTypeMIMETypes);
@@ -98,12 +109,18 @@ try {
   console.log('Error', err);
 }
 
-console.log('ItemContentTypeTree', [...new Set(ItemContentTypeTree.reduce((arr, item) => {
+const appNames = [...new Set(ItemContentTypeTree.reduce((arr, item) => {
   if (!contentTypeObj[item]) {
     return arr;
   }
   return arr.concat(contentTypeObj[item]);
-}, exts))].sort());
+}, exts))].sort();
+console.log('appNames', appNames);
+
+// Todo: Use `@fiahfy/icns` to extract their PNG, etc. for HTML display?
+console.log('appIcons', appNames.map((appName) => {
+  return iconMap.get(appName);
+}));
 
 return;
 
