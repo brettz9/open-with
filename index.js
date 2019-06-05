@@ -1,4 +1,4 @@
-/* eslint-disable no-console */
+/* eslint-disable no-console -- CLI */
 'use strict';
 const {readFileSync} = require('fs');
 const {join, extname} = require('path');
@@ -6,8 +6,8 @@ const mdls = require('mdls');
 const lsregister = require('lsregister');
 const {MacOSDefaults} = require('macos-defaults');
 const OpenWith = require('macos-defaults/OpenWith');
-const Icns = require('@fiahfy/icns');
-const Datauri = require('datauri');
+const {Icns} = require('@fiahfy/icns');
+const DatauriParser = require('datauri/parser');
 
 // const filePath = join(__dirname, 'index.js');
 const filePath = join(__dirname, 'README.md');
@@ -35,7 +35,7 @@ try {
   console.log('Error', err);
 }
 
-// eslint-disable-next-line max-len
+// eslint-disable-next-line max-len -- Long path
 // /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -dump | grep -n7 'public'
 let contentTypeObj;
 const exts = [];
@@ -137,10 +137,9 @@ appIcons.forEach((appIcon) => {
   // 'icon.osType', e.g., `ic09`: https://en.wikipedia.org/wiki/Apple_Icon_Image_format#Icon_types
   // console.log('imagesAsBuffers', imagesAsBuffers);
   imagesAsBuffers.some((imageAsBuffer, i) => {
-    const datauri = new Datauri();
-
+    const parser = new DatauriParser();
     // Todo: Use this: console.log('mimetype', datauri.mimetype);
-    datauri.format('.png', imageAsBuffer);
+    parser.format('.png', imageAsBuffer);
 
     const {osType} = imagesByIncreasingBytes[i];
     if (
@@ -150,7 +149,7 @@ appIcons.forEach((appIcon) => {
       return false;
     }
     console.log('osType:' + osType + ';');
-    console.log(`<img src="${datauri.content}" />`);
+    console.log(`<img src="${parser.content}" />`);
     return true;
   });
 });
