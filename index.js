@@ -155,8 +155,6 @@ appIcons.forEach((appIcon) => {
   });
 });
 
-return;
-
 try {
   const macOSDefaults = new MacOSDefaults();
   const lsHandlers = await macOSDefaults.read({

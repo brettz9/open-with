@@ -10,6 +10,8 @@ module.exports = {
     ],
     settings: {
       polyfills: [
+        'Map',
+        'Set'
       ],
       jsdoc: {
         // For `jsdoc/check-examples` in `ash-nazg`
